@@ -1,0 +1,15 @@
+{
+  "name": "Razenty Focus Core",
+  "short_name": "FocusCore",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#6496C8",
+  "theme_color": "#6496C8",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2519/2519315.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

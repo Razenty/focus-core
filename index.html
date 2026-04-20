@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Core | Razenty Control Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Varsayılan Temalar */
+            --color-work: #6496C8;  
+            --btn-work-inner: #4a759c; 
+            --color-break: #2D4356; 
+            --btn-break-inner: #1a2a36;
+            --text-white: #ffffff;
+            --text-white-dim: rgba(255, 255, 255, 0.6);
+            --outline-calisma: #f1c40f; 
+            --outline-mola: #2ecc71;    
+            --outline-mod: #3498db;     
+            --outline-sifirla: #e74c3c; 
+        }
+
+        /* TEMA SINIFLARI */
+        body.theme-dark { --color-work: #1a1a1a; --btn-work-inner: #333; }
+        body.theme-forest { --color-work: #2d5a27; --btn-work-inner: #1e3d1a; }
+        body.theme-baby { --color-work: #6496C8; --btn-work-inner: #4a759c; }
+
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #1a1a1a;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 1000; transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        .splash-logo { font-size: 40px; font-weight: 900; letter-spacing: 8px; color: #6496C8; text-transform: uppercase; animation: pulseLogo 2s infinite; }
+        .splash-loader { margin-top: 20px; width: 200px; height: 2px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+        .splash-loader::after { content: ''; position: absolute; left: -100%; width: 100%; height: 100%; background: #6496C8; animation: loadingBar 2s forwards; }
+
+        @keyframes pulseLogo { 0%, 100% { opacity: 0.5; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1); } }
+        @keyframes loadingBar { 100% { left: 0; } }
+
+        body {
+            background-color: var(--color-work);
+            color: var(--text-white);
+            font-family: 'Inter', system-ui, sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; overflow: hidden; transition: background-color 1s ease;
+        }
+
+        .circle { position: absolute; background-color: rgba(255, 255, 255, 0.1); border-radius: 50%; z-index: -1; transition: 1s ease; }
+        .c1 { width: 600px; height: 600px; top: -200px; left: -200px; }
+        .c2 { width: 400px; height: 400px; bottom: -100px; right: -100px; }
+
+        .footer-credits { position: fixed; bottom: 20px; left: 20px; font-size: 11px; letter-spacing: 1px; color: var(--text-white-dim); text-transform: uppercase; font-weight: 600; }
+        .footer-credits span { color: var(--text-white); font-weight: 800; }
+
+        .main-container { display: flex; align-items: center; justify-content: center; gap: 70px; width: 100%; transition: all 0.8s ease; }
+        .left-panel { display: flex; flex-direction: column; gap: 20px; }
+        .goal-box { background: rgba(255, 255, 255, 0.1); padding: 15px 20px; border-radius: 15px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; }
+        .controls-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        button { background-color: var(--btn-work-inner); border: 3.5px solid transparent; padding: 20px 30px; border-radius: 18px; color: white; font-weight: 800; cursor: pointer; transition: all 0.5s ease; text-transform: uppercase; font-size: 12px; }
+        .btn-c { border-color: var(--outline-calisma); }
+        .btn-m { border-color: var(--outline-mola); }
+        .btn-o { border-color: var(--outline-mod); }
+        .btn-s { border-color: var(--outline-sifirla); }
+        button:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+
+        .timer-section { text-align: center; }
+        .timer-display { font-size: 160px; font-weight: 900; line-height: 0.9; margin: 10px 0; }
+        .interaction-text { margin-top: 30px; font-size: 14px; cursor: pointer; opacity: 0.7; font-weight: 600; }
+
+        body.is-running .main-container { gap: 130px; }
+        body.is-running .left-panel { order: -1; }
+        body.is-running .controls-panel { grid-template-columns: 1fr; }
+        body.mode-break { background-color: var(--color-break); }
+        body.mode-break button { background-color: var(--btn-break-inner); }
+
+        /* GELİŞMİŞ AYARLAR MODALI */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(8px); }
+        .settings-card { background: #222; padding: 30px; border-radius: 30px; width: 380px; position: relative; border: 2px solid var(--outline-mod); }
+        .close-modal { position: absolute; top: 20px; right: 20px; color: #888; cursor: pointer; font-size: 20px; }
+        .settings-card h2 { margin: 0 0 20px 0; color: #6496C8; font-size: 18px; text-transform: uppercase; }
+        
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #333; }
+        .setting-row label { font-size: 13px; color: #aaa; text-transform: uppercase; }
+        .setting-row input[type="number"] { width: 60px; padding: 8px; background: #111; border: 1px solid #444; border-radius: 8px; color: white; text-align: center; }
+        
+        /* Tema Seçici */
+        .theme-selector { display: flex; gap: 10px; }
+        .theme-dot { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+        .theme-dot.active { border-color: white; }
+
+        /* Switch Buton */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--outline-mola); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .save-btn { width: 100%; background: #6496C8; color: #1a2a36; border: none; padding: 15px; border-radius: 15px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+    </style>
+</head>
+<body id="body" class="theme-baby">
+
+    <div id="splash-screen">
+        <div class="splash-logo">RAZENTY</div>
+        <div style="color: #666; letter-spacing: 2px; font-size: 10px; margin-top: 10px;">FOCUS CORE ENGINE</div>
+        <div class="splash-loader"></div>
+    </div>
+
+    <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" preload="auto"></audio>
+    <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" preload="auto"></audio>
+
+    <div class="circle c1"></div><div class="circle c2"></div>
+
+    <div class="footer-credits">CREATED BY <span>RAZENTY</span><br>POWERED BY <span>GEMINI</span></div>
+
+    <div class="modal-overlay" id="settingsModal">
+        <div class="settings-card">
+            <span class="close-modal" onclick="closeModal('settingsModal')">✕</span>
+            <h2>KONTROL MERKEZİ</h2>
+            
+            <div class="setting-row">
+                <label>Çalışma (Dakika)</label>
+                <input type="number" id="workInput">
+            </div>
+            
+            <div class="setting-row">
+                <label>Mola (Dakika)</label>
+                <input type="number" id="breakInput">
+            </div>
+
+            <div class="setting-row">
+                <label>Otomatik Mod Geçişi</label>
+                <label class="switch">
+                    <input type="checkbox" id="autoSwitch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-row">
+                <label>Görünüm Teması</label>
+                <div class="theme-selector">
+                    <div class="theme-dot" style="background:#6496C8" onclick="changeTheme('baby')"></div>
+                    <div class="theme-dot" style="background:#2d5a27" onclick="changeTheme('forest')"></div>
+                    <div class="theme-dot" style="background:#1a1a1a" onclick="changeTheme('dark')"></div>
+                </div>
+            </div>
+
+            <button class="save-btn" onclick="saveSettings()">AYARLARI UYGULA</button>
+        </div>
+    </div>
+
+<div class="modal-overlay" id="goalModal">
+    <div class="settings-card" style="border-color: var(--outline-calisma); width: 420px;">
+        <span class="close-modal" onclick="closeModal('goalModal')">✕</span>
+        <h2 style="color: var(--outline-calisma); letter-spacing: 3px; font-size: 18px;">OPERASYON HEDEFİ</h2>
+        
+        <div class="input-group" style="margin-bottom: 20px; position: relative; text-align: left;">
+            <label style="color: #666; font-size: 10px; letter-spacing: 1px; display: block; margin-bottom: 8px;">GÖREV TANIMI</label>
+            <input type="text" id="goalInput" placeholder="Örn: MATEMATİK 20 SORU" 
+                style="width: 100%; 
+                       padding: 18px; 
+                       background: #111; 
+                       border: 2px solid #333; 
+                       color: white; 
+                       border-radius: 15px; 
+                       font-weight: 700; 
+                       font-family: 'Inter';
+                       letter-spacing: 1px;
+                       outline: none;
+                       transition: 0.3s;
+                       box-sizing: border-box;">
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap;">
+            <button onclick="quickGoal('MATEMATİK')" style="padding: 8px 12px; font-size: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; width: auto; min-width: 60px;">MAT</button>
+            <button onclick="quickGoal('FİZİK')" style="padding: 8px 12px; font-size: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; width: auto; min-width: 60px;">FİZİK</button>
+            <button onclick="quickGoal('KİMYA')" style="padding: 8px 12px; font-size: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; width: auto; min-width: 60px;">KİMYA</button>
+            <button onclick="quickGoal('BİYOLOJİ')" style="padding: 8px 12px; font-size: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; width: auto; min-width: 60px;">BİYO</button>
+            <button onclick="quickGoal('PARAGRAF')" style="padding: 8px 12px; font-size: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; width: auto; min-width: 60px; color: #2ecc71;">PARAGRAF</button>
+            <button onclick="quickGoal('DENEME')" style="padding: 8px 12px; font-size: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; width: auto; min-width: 60px; color: #e74c3c;">DENEME</button>
+        </div>
+
+        <button class="save-btn" style="background: var(--outline-calisma); color: #000;" onclick="saveGoal()">SİSTEME YÜKLE</button>
+    </div>
+</div>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="goal-box" onclick="openModal('goalModal')">
+                <div style="font-size:10px; opacity:0.5; letter-spacing:2px">HEDEF</div>
+                <div id="goalDisplay" style="font-weight:700">HEDEF BELİRLE...</div>
+            </div>
+            <div class="controls-panel">
+                <button class="btn-c" onclick="setMode('work')">ÇALIŞMA</button>
+                <button class="btn-m" onclick="setMode('break')">DİNLENME</button>
+                <button class="btn-o" onclick="openModal('settingsModal')">AYARLAR ⚙️</button>
+                <button class="btn-s" onclick="resetTimer()">SIFIRLA</button>
+            </div>
+        </div>
+
+        <div class="timer-section">
+            <div class="mode-badge" id="modeBadge" style="font-size:12px; letter-spacing:5px; opacity:0.7">FOCUS CORE</div>
+            <div class="timer-display" id="time">25:00</div>
+            <div class="interaction-text" id="intBtn" onclick="toggleTimer()">BAŞLATMAK İÇİN DOKUN...</div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => { setTimeout(() => { document.getElementById('splash-screen').style.opacity = '0'; setTimeout(() => { document.getElementById('splash-screen').style.visibility = 'hidden'; }, 800); }, 2000); });
+
+        let workTime = 25, breakTime = 5, timeLeft = 1500, timerId = null, currentMode = 'work', autoSwitch = false;
+        const body = document.getElementById('body'), display = document.getElementById('time'), intBtn = document.getElementById('intBtn');
+
+        function updateDisplay() {
+            let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+            display.textContent = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+        }
+
+        function setMode(mode) {
+            stopTimer(); currentMode = mode;
+            if(mode === 'work') { timeLeft = workTime * 60; body.classList.remove('mode-break'); } 
+            else { timeLeft = breakTime * 60; body.classList.add('mode-break'); }
+            updateDisplay();
+        }
+
+        function toggleTimer() { if (timerId) stopTimer(); else startTimer(); }
+
+        function startTimer() {
+            body.classList.add('is-running');
+            intBtn.textContent = "DURAKLATMAK İÇİN DOKUN...";
+            timerId = setInterval(() => {
+                if (timeLeft <= 0) {
+                    stopTimer(); document.getElementById('alarmSound').play();
+                    if(autoSwitch) {
+                        setMode(currentMode === 'work' ? 'break' : 'work');
+                        startTimer();
+                    } else { alert("Süre doldu!"); }
+                } else { timeLeft--; updateDisplay(); }
+            }, 1000);
+        }
+
+        function stopTimer() { clearInterval(timerId); timerId = null; body.classList.remove('is-running'); intBtn.textContent = "DEVAM ETMEK İÇİN DOKUN..."; }
+        function resetTimer() { stopTimer(); setMode(currentMode); }
+        function openModal(id) { 
+            if(id === 'settingsModal') {
+                document.getElementById('workInput').value = workTime;
+                document.getElementById('breakInput').value = breakTime;
+                document.getElementById('autoSwitch').checked = autoSwitch;
+            }
+            document.getElementById(id).style.display = 'flex'; 
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function changeTheme(theme) { body.className = 'theme-' + theme; }
+
+        function saveSettings() {
+            workTime = parseInt(document.getElementById('workInput').value) || 25;
+            breakTime = parseInt(document.getElementById('breakInput').value) || 5;
+            autoSwitch = document.getElementById('autoSwitch').checked;
+            closeModal('settingsModal'); resetTimer();
+        }
+
+        function saveGoal() {
+            const goal = document.getElementById('goalInput').value;
+            document.getElementById('goalDisplay').textContent = goal ? goal.toUpperCase() : "HEDEF BELİRLE...";
+            closeModal('goalModal');
+        }
+        function quickGoal(text) {
+        document.getElementById('goalInput').value = text + " ÇALIŞMASI";
+        }
+        setMode('work');
+    </script>
+</body>
+</html>
